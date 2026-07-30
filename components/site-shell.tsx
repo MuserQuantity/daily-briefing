@@ -46,11 +46,13 @@ export function SiteShell({
             <ArchiveStrip items={items} activeDate={activeDate} />
           </div>
           {/*
-            正文列是流动的，不在这里统一限宽。
-            行长由子元素各自的 .measure / .measure-title 控制，
-            表格、指标卡等数据区块则铺满整列。
+            所有内容统一这一个宽度（含表格、指标卡等区块），不做分层破格：
+            宽度不一致会让正文相对区块显得缩进，像排版错位。
+            mx-auto 让富余空间左右均分，而不是全堆在右边。
           */}
-          <div className="mt-6 min-w-0 lg:mt-0">{children}</div>
+          <div className="mx-auto mt-6 min-w-0 max-w-[48rem] lg:mt-0">
+            {children}
+          </div>
         </main>
 
         {/* 右：本页目录 */}

@@ -26,7 +26,7 @@ export default function HomePage() {
           fallbackNotice={!isToday}
         />
       ) : (
-        <div className="measure rounded-md border border-border p-8">
+        <div className="rounded-md border border-border p-8">
           <h1 className="text-2xl font-light text-foreground">暂无日报</h1>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
             添加一个按年月归档的 Markdown 文件即可，例如{' '}

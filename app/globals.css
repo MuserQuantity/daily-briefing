@@ -124,25 +124,6 @@
 }
 
 @layer utilities {
-  /*
-   * 阅读宽度。正文列本身是流动的，靠这两个类把「文字流」限制在舒适行长内，
-   * 表格、指标卡、代码块等数据型区块则不加，直接铺满整列。
-   *
-   * 一律居中（margin-inline: auto），这样每一档宽度的左右间隙都相等，
-   * 读起来是一组同心的层级，而不是把富余空间全堆在右边。
-   * 48rem 下正文约 49 个汉字一行，接近中文舒适区上沿。
-   */
-  .measure {
-    max-width: 48rem;
-    margin-inline: auto;
-  }
-
-  /* 标题单独宽一档：拉开层级，也让长中文标题少折行 */
-  .measure-title {
-    max-width: 54rem;
-    margin-inline: auto;
-  }
-
   /* 顶部品牌色条：同色系两段渐变，仅作 2px 标识 */
   .brand-bar {
     background: linear-gradient(

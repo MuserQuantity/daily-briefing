@@ -32,23 +32,24 @@ export function DailyView({
       ) : null}
 
       <header>
-        <p className="measure eyebrow text-muted-foreground">
+        <p className="eyebrow text-muted-foreground">
           {isToday ? '今日日报' : '往期日报'}
           {daily.issue ? ` · 第 ${daily.issue} 期` : ''}
         </p>
 
-        {/* 比正文宽一档，长中文标题更不容易折出难看的断点 */}
-        <h1 className="measure-title mt-3 text-balance text-[1.9rem] font-light leading-[1.25] tracking-[0.01em] text-foreground sm:text-[2.2rem]">
+        {/* 2.2rem 而非 2.5rem：48rem 宽下能放约 22 个汉字，
+            长中文标题多数不会折行，也就不会折出难看的断点 */}
+        <h1 className="mt-3 text-balance text-[1.9rem] font-light leading-[1.25] tracking-[0.01em] text-foreground sm:text-[2.2rem]">
           {daily.title}
         </h1>
 
         {daily.summary ? (
-          <p className="measure mt-4 text-pretty text-[1.0625rem] leading-[1.7] text-muted-foreground">
+          <p className="mt-4 text-pretty text-[1.0625rem] leading-[1.7] text-muted-foreground">
             {daily.summary}
           </p>
         ) : null}
 
-        <div className="measure mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-muted-foreground">
+        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-muted-foreground">
           <time dateTime={daily.date} className="tabular-nums">
             {formatFullDate(daily.date)}
           </time>
@@ -63,7 +64,7 @@ export function DailyView({
         </div>
 
         {daily.tags.length ? (
-          <ul className="measure mt-4 flex flex-wrap gap-1.5">
+          <ul className="mt-4 flex flex-wrap gap-1.5">
             {daily.tags.map((tag) => (
               <li
                 key={tag}
