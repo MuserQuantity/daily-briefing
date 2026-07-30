@@ -29,15 +29,15 @@ export default function HomePage() {
         <div className="rounded-md border border-border p-8">
           <h1 className="text-2xl font-light text-foreground">暂无日报</h1>
           <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
-            请在{' '}
+            添加一个按年月归档的 Markdown 文件即可，例如{' '}
             <code className="rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
-              content/daily/
-            </code>{' '}
-            目录下添加以日期命名的 Markdown 文件，例如{' '}
-            <code className="rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
-              2026-07-30.md
+              content/daily/2026/07/2026-07-30.md
             </code>
-            。
+            ；也可以通过{' '}
+            <code className="rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
+              POST /api/daily
+            </code>{' '}
+            推送。
           </p>
         </div>
       )}

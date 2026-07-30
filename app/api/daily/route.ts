@@ -3,13 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import matter from 'gray-matter'
 import { NextResponse } from 'next/server'
-import {
-  CONTENT_DIR,
-  dailyFilePath,
-  getAllMeta,
-  isValidDate,
-  today,
-} from '@/lib/daily'
+import { dailyFilePath, getAllMeta, isValidDate, today } from '@/lib/daily'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -178,7 +172,8 @@ export async function POST(req: Request) {
     .catch(() => false)
 
   try {
-    await fs.mkdir(CONTENT_DIR, { recursive: true })
+    // 落到 content/daily/YYYY/MM/，年月目录按需创建
+    await fs.mkdir(path.dirname(file), { recursive: true })
     // 先写临时文件再 rename：页面每次请求都在读这个目录，
     // 原子替换可以避免读到写了一半的内容（.tmp 不在扫描的扩展名里）
     const tmp = `${file}.${process.pid}.${Date.now()}.tmp`

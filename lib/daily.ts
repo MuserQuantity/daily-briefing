@@ -41,13 +41,20 @@ export function isValidDate(value: string): boolean {
 }
 
 /**
- * 日期 -> 落盘路径。日期来自外部输入，除正则外再确认解析结果确实落在
- * content/daily 内，避免任何形式的路径穿越。
+ * 日期 -> 落盘路径：`content/daily/YYYY/MM/YYYY-MM-DD.md`。
+ * 日期来自外部输入，除严格校验外再确认解析结果确实落在 content/daily 内，
+ * 避免任何形式的路径穿越。
  */
 export function dailyFilePath(date: string): string | null {
   if (!isValidDate(date)) return null
-  const file = path.resolve(CONTENT_DIR, `${date}.md`)
-  if (path.dirname(file) !== path.resolve(CONTENT_DIR)) return null
+  const root = path.resolve(CONTENT_DIR)
+  const file = path.resolve(
+    root,
+    date.slice(0, 4),
+    date.slice(5, 7),
+    `${date}.md`,
+  )
+  if (!file.startsWith(`${root}${path.sep}`)) return null
   return file
 }
 
@@ -57,41 +64,112 @@ function toArray(value: unknown): string[] {
   return []
 }
 
-/** 单次请求内只扫描一次目录：页面、导航、目录树会重复调用下面的读取函数 */
-const readAll = cache((): Daily[] => {
-  if (!fs.existsSync(CONTENT_DIR)) return []
+function readdirSafe(dir: string): fs.Dirent[] {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+}
 
-  const files = fs
-    .readdirSync(CONTENT_DIR)
-    .filter((f) => f.endsWith('.md') || f.endsWith('.mdx'))
+/**
+ * 收集 `content/daily/YYYY/MM/YYYY-MM-DD.md`。布局是严格的：
+ * 目录层级必须和文件名里的日期对得上，否则同一期可能在两处出现，
+ * 排序和上下期导航就会自相矛盾。对不上的直接忽略。
+ */
+function scanFiles(): string[] {
+  const found: string[] = []
 
-  const items = files.map((file) => {
-    const raw = fs.readFileSync(path.join(CONTENT_DIR, file), 'utf8')
-    const { data, content } = matter(raw)
+  for (const year of readdirSafe(CONTENT_DIR)) {
+    if (!year.isDirectory() || !/^\d{4}$/.test(year.name)) continue
+    const yearDir = path.join(CONTENT_DIR, year.name)
 
-    const slug = file.replace(/\.mdx?$/, '')
-    const date = DATE_RE.test(String(data.date ?? '')) ? String(data.date) : slug
+    for (const month of readdirSafe(yearDir)) {
+      if (!month.isDirectory() || !/^\d{2}$/.test(month.name)) continue
+      const monthDir = path.join(yearDir, month.name)
 
-    const plain = content.replace(/[#>*`\-\[\]()|]/g, '')
-    const wordCount = plain.replace(/\s+/g, '').length
+      for (const entry of readdirSafe(monthDir)) {
+        if (!entry.isFile()) continue
+        const matched = /^(\d{4}-\d{2}-\d{2})\.mdx?$/.exec(entry.name)
+        if (!matched) continue
 
-    return {
-      date,
-      title: String(data.title ?? `AI 日报 · ${date}`),
-      issue: typeof data.issue === 'number' ? data.issue : undefined,
-      summary: data.summary ? String(data.summary) : undefined,
-      tags: toArray(data.tags),
-      highlights: toArray(data.highlights),
-      editor: data.editor ? String(data.editor) : undefined,
-      content,
-      wordCount,
-      readingMinutes: Math.max(1, Math.round(wordCount / 400)),
-    } satisfies Daily
-  })
+        const date = matched[1]
+        if (date.slice(0, 4) !== year.name) continue
+        if (date.slice(5, 7) !== month.name) continue
+        if (!isValidDate(date)) continue
+
+        found.push(path.join(monthDir, entry.name))
+      }
+    }
+  }
+
+  return found.sort()
+}
+
+function parseFile(file: string): Daily {
+  // 布局已校验过，文件名即这一期的日期，无需再信 frontmatter
+  const date = path.basename(file).replace(/\.mdx?$/, '')
+  const { data, content } = matter(fs.readFileSync(file, 'utf8'))
+
+  const plain = content.replace(/[#>*`\-\[\]()|]/g, '')
+  const wordCount = plain.replace(/\s+/g, '').length
+
+  return {
+    date,
+    title: String(data.title ?? `AI 日报 · ${date}`),
+    issue: typeof data.issue === 'number' ? data.issue : undefined,
+    summary: data.summary ? String(data.summary) : undefined,
+    tags: toArray(data.tags),
+    highlights: toArray(data.highlights),
+    editor: data.editor ? String(data.editor) : undefined,
+    content,
+    wordCount,
+    readingMinutes: Math.max(1, Math.round(wordCount / 400)),
+  } satisfies Daily
+}
+
+/**
+ * 进程内索引缓存。
+ *
+ * 页面是 force-dynamic，每个请求都要拿到全量列表；而全量读取 + 解析是
+ * O(期数)，千级时约 23ms 且只会越来越慢。签名只做 readdir + stat（同规模
+ * 约 2ms），内容一变签名就变，所以「写入后立刻生效」的行为没有损失。
+ */
+let indexCache: { signature: string; items: Daily[] } | null = null
+
+function buildIndex(): Daily[] {
+  const files = scanFiles()
+  const signature = files
+    .map((file) => {
+      try {
+        const stat = fs.statSync(file)
+        return `${file}:${stat.mtimeMs}:${stat.size}`
+      } catch {
+        return `${file}:missing`
+      }
+    })
+    .join('\n')
+
+  if (indexCache?.signature === signature) return indexCache.items
+
+  const items: Daily[] = []
+  for (const file of files) {
+    try {
+      items.push(parseFile(file))
+    } catch (err) {
+      // 单个文件 frontmatter 写坏了只跳过它，不能让整站 500
+      console.error(`[daily] 跳过无法解析的文件 ${file}:`, err)
+    }
+  }
 
   // 按日期倒序：最新在前
-  return items.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-})
+  items.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+  indexCache = { signature, items }
+  return items
+}
+
+/** 单次请求内只走一次索引：页面、导航、目录树会重复调用下面的读取函数 */
+const readAll = cache(buildIndex)
 
 export function getAllDailies(): Daily[] {
   return readAll()

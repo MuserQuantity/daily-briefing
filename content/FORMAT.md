@@ -7,19 +7,24 @@
 ## 1. 文件位置与命名
 
 ```
-content/daily/YYYY-MM-DD.md
+content/daily/YYYY/MM/YYYY-MM-DD.md
 ```
 
-- 目录固定为 `content/daily/`，扩展名 `.md` 或 `.mdx`。
-- 文件名的日期即该期日期，**以 UTC+8 为准**。例：`content/daily/2026-07-30.md`。
+例：`content/daily/2026/07/2026-07-30.md`
+
+- **按年、月两层归档**，年目录是 4 位、月目录是 2 位（`07` 不能写成 `7`）。
+- 文件名要写完整日期，扩展名 `.md` 或 `.mdx`。日期**以 UTC+8 为准**。
+- **目录层级必须和文件名里的日期一致**。放错层（例如把 `2026-07-30.md` 放进 `2026/08/`）会被直接忽略，不会渲染出来。
 - 一天一个文件。同名文件会被覆盖。
 - 站点排序、归档分组、上下期导航全部由文件名日期推导，无需额外索引文件。
+
+> 布局是严格的：不符合上面结构的文件一律不扫描。扁平放在 `content/daily/` 根下的文件**不会**被识别。
 
 网站行为：首页取当前 UTC+8 日期对应的文件；若不存在，则回退显示最新一期，并在顶部加一条「今日尚未发布」提示。所以自动任务**只需按时写文件**，不需要改任何代码。
 
 投递方式有两种，二选一：
 
-1. **直接写文件**——能访问部署目录时最简单，把文件放进 `content/daily/` 即可。
+1. **直接写文件**——能访问部署目录时最简单，按上面的年/月路径放好即可（目录不存在要自己建）。
 2. **HTTP 推送**——`POST /api/daily`，带 `Authorization: Bearer <DAILY_API_TOKEN>`。
    把本规范生成的整篇内容以 `Content-Type: text/markdown` 发过去就行，日期取 frontmatter 里的 `date`。
    也可以发 `application/json`（字段见下一节），由服务端拼 frontmatter，省去 YAML 转义的麻烦。
@@ -309,7 +314,8 @@ const messages = [{ role: 'system', content: SYSTEM_PROMPT }]
 
 ## 7. 自动任务对接清单
 
-- [ ] 按 UTC+8 日期生成 `content/daily/YYYY-MM-DD.md`，一天一个文件
+- [ ] 按 UTC+8 日期生成 `content/daily/YYYY/MM/YYYY-MM-DD.md`，一天一个文件
+- [ ] 年/月目录层级与文件名日期一致，月份补零（`07` 而非 `7`）
 - [ ] frontmatter 中 `date` 加引号、`issue` 为数字
 - [ ] `highlights` 3–5 条纯文本
 - [ ] 正文用 3–5 个 `##` 分章，保证右侧目录可用
