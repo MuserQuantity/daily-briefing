@@ -23,9 +23,33 @@ export type Daily = DailyMeta & {
   readingMinutes: number
 }
 
-const CONTENT_DIR = path.join(process.cwd(), 'content', 'daily')
+export const CONTENT_DIR = path.join(process.cwd(), 'content', 'daily')
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 严格校验日历日期：格式对 **且** 真实存在。
+ * 单靠正则会放过 2026-02-30，这里用往返比对把它挡掉。
+ */
+export function isValidDate(value: string): boolean {
+  if (!DATE_RE.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value
+  )
+}
+
+/**
+ * 日期 -> 落盘路径。日期来自外部输入，除正则外再确认解析结果确实落在
+ * content/daily 内，避免任何形式的路径穿越。
+ */
+export function dailyFilePath(date: string): string | null {
+  if (!isValidDate(date)) return null
+  const file = path.resolve(CONTENT_DIR, `${date}.md`)
+  if (path.dirname(file) !== path.resolve(CONTENT_DIR)) return null
+  return file
+}
 
 function toArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.map((v) => String(v))

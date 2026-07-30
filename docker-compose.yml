@@ -6,9 +6,16 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+    environment:
+      # 取自同目录的 .env；留空则 /api/daily 保持关闭（503）
+      DAILY_API_TOKEN: ${DAILY_API_TOKEN:-}
     volumes:
-      # 把日报目录挂出来：自动任务往宿主机 ./content/daily 写文件即刻生效，无需重建镜像
-      - ./content:/app/content:ro
+      # 日报目录挂到宿主机：推送接口写入这里，页面下次请求就能读到，
+      # 既不用重建镜像，内容也不会随容器重建而丢失。
+      #
+      # 容器内以 uid 1001 运行，宿主机目录需要对它可写，首次部署执行：
+      #   sudo chown -R 1001:1001 ./content
+      - ./content:/app/content
     healthcheck:
       test:
         - CMD

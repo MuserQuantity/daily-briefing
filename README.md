@@ -77,22 +77,105 @@ highlights:
 - 自定义块用**半角** `|` 分隔，单元格内不能再出现 `|`
 - 正文不要写 `# 一级标题`，主标题由 frontmatter 的 `title` 提供
 
+## 推送接口
+
+不方便直接写服务器文件系统时，用 HTTP 推送。适合跑在别处的自动任务。
+
+### 配置
+
+只有一个环境变量，写在 `.env` 里（可从 `.env.example` 复制）：
+
+```bash
+DAILY_API_TOKEN=$(openssl rand -hex 32)
+```
+
+**不设置就等于不开启**：接口一律返回 503，不会出现一个公开可写的端点。
+
+### `POST /api/daily` — 发布
+
+两种请求体都支持，按 `Content-Type` 区分。同一天重复推送直接覆盖，**幂等**，任务重试或修正当天内容都安全。
+
+**结构化 JSON**——服务端负责拼 frontmatter，客户端不用操心 YAML 转义：
+
+```bash
+curl -X POST https://你的域名/api/daily \
+  -H "Authorization: Bearer $DAILY_API_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "date": "2026-07-30",
+    "title": "推理成本再降一半",
+    "issue": 214,
+    "editor": "编辑部",
+    "summary": "一到两句导语。",
+    "tags": ["模型发布", "推理成本"],
+    "highlights": ["要点一", "要点二"],
+    "content": "## 今日概览\n\n正文用标准 Markdown。"
+  }'
+```
+
+除 `date` 和 `content` 外都可省略。
+
+**原始 Markdown**——按 [FORMAT.md](content/FORMAT.md) 生成好整篇就直接发，原样落盘：
+
+```bash
+curl -X POST https://你的域名/api/daily \
+  -H "Authorization: Bearer $DAILY_API_TOKEN" \
+  -H 'Content-Type: text/markdown' \
+  --data-binary @2026-07-30.md
+```
+
+日期取自 frontmatter 的 `date`；正文没写 frontmatter 时用 `?date=2026-07-30` 指定。
+
+成功返回：
+
+```json
+{ "ok": true, "action": "created", "date": "2026-07-30",
+  "file": "content/daily/2026-07-30.md", "bytes": 4213 }
+```
+
+`action` 为 `created` 或 `updated`，可据此判断是新发还是覆盖。
+
+### `GET /api/daily` — 列出已发布
+
+```bash
+curl -H "Authorization: Bearer $DAILY_API_TOKEN" https://你的域名/api/daily
+```
+
+返回 `today`（当前 UTC+8 日期）和全部期次的元信息。自动任务可以先查一下，避免重复发。
+
+### 错误码
+
+| 状态码 | 含义 |
+| --- | --- |
+| `401` | 密钥缺失或不正确 |
+| `400` | 日期非法、缺 `content`、frontmatter 的 YAML 写坏了 |
+| `413` | 请求体超过 1 MB |
+| `415` | `Content-Type` 不是上面两种 |
+| `503` | 未配置 `DAILY_API_TOKEN`，接口未开启 |
+| `500` + `content_not_writable` | `content/` 目录容器内写不进去，见下方权限说明 |
+
+YAML 写坏时会**在落盘前**拦下并回报具体报错位置，不会留下一个渲染时才炸的文件。
+
 ## 部署（Docker Compose）
 
 ```bash
+cp .env.example .env      # 填入 DAILY_API_TOKEN
+sudo chown -R 1001:1001 ./content
 docker compose up -d --build
 ```
 
-站点跑在 `3000` 端口。镜像基于 Next.js standalone 产物，以非 root 用户运行。
+站点跑在 `3000` 端口。镜像基于 Next.js standalone 产物，以非 root 用户（uid 1001）运行。
 
-关键点在 `docker-compose.yml` 里这行挂载：
+关键点在这行挂载：
 
 ```yaml
 volumes:
-  - ./content:/app/content:ro
+  - ./content:/app/content
 ```
 
-**`content/` 是挂进去的，不在镜像里冻结。** 自动任务往宿主机的 `./content/daily/` 写文件，下一次请求就会读到新内容——不用重新构建镜像，不用重启容器。
+**`content/` 是挂到宿主机的，不在镜像里冻结。** 无论是推送接口写入，还是直接往 `./content/daily/` 扔文件，下一次请求就能读到——不用重建镜像，不用重启容器，内容也不会随容器重建而丢失。
+
+> 上面那句 `chown` 不能省。容器以 uid 1001 运行，宿主机目录默认不归它所有，漏掉的话推送接口会返回 `content_not_writable`。只读模式（不开推送接口、只手动放文件）可以把挂载改回 `:ro`。
 
 常用操作：
 
@@ -102,7 +185,7 @@ docker compose up -d --build    # 改了代码后重新部署
 docker compose down             # 停止
 ```
 
-前面通常还要挂一层 Nginx / Caddy 反代来处理 HTTPS。
+前面通常还要挂一层 Nginx / Caddy 反代来处理 HTTPS——**推送接口带密钥，务必走 HTTPS，不要裸奔在公网 HTTP 上。**
 
 ## 目录结构
 
@@ -110,6 +193,7 @@ docker compose down             # 停止
 app/
   page.tsx            首页：当日一期，缺则回退最新
   d/[date]/page.tsx   按日期查看往期
+  api/daily/route.ts  推送接口：POST 发布 / GET 列表
   icon.svg            站点图标（Next.js 文件约定）
   globals.css         Tailwind v4 主题变量
 components/
@@ -124,6 +208,7 @@ lib/
 content/
   FORMAT.md           Markdown 格式规范（不会被渲染）
   daily/*.md          日报正文
+.env.example          环境变量样例
 ```
 
 ## 一些实现细节

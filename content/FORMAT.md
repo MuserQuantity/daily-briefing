@@ -17,6 +17,14 @@ content/daily/YYYY-MM-DD.md
 
 网站行为：首页取当前 UTC+8 日期对应的文件；若不存在，则回退显示最新一期，并在顶部加一条「今日尚未发布」提示。所以自动任务**只需按时写文件**，不需要改任何代码。
 
+投递方式有两种，二选一：
+
+1. **直接写文件**——能访问部署目录时最简单，把文件放进 `content/daily/` 即可。
+2. **HTTP 推送**——`POST /api/daily`，带 `Authorization: Bearer <DAILY_API_TOKEN>`。
+   把本规范生成的整篇内容以 `Content-Type: text/markdown` 发过去就行，日期取 frontmatter 里的 `date`。
+   也可以发 `application/json`（字段见下一节），由服务端拼 frontmatter，省去 YAML 转义的麻烦。
+   同一天重复推送会直接覆盖，重试安全。详见项目 README。
+
 ---
 
 ## 2. Frontmatter（YAML）
@@ -308,3 +316,5 @@ const messages = [{ role: 'system', content: SYSTEM_PROMPT }]
 - [ ] 自定义块用半角 `|` 分隔，单元格内不含 `|`
 - [ ] 每期末尾附 `sources` 块
 - [ ] 提交后无需重启或改配置，页面读文件即时生效
+- [ ] 走 HTTP 推送时：带上 Bearer 密钥，确认返回 `{"ok":true}`，`action` 为 `created` / `updated`
+- [ ] 走 HTTP 推送时：返回 400 说明 frontmatter 或日期有问题，此时**内容没有落盘**，需要修正后重推
