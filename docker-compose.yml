@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    image: daily-briefing
+    container_name: daily-briefing
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    volumes:
+      # 把日报目录挂出来：自动任务往宿主机 ./content/daily 写文件即刻生效，无需重建镜像
+      - ./content:/app/content:ro
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

@@ -551,21 +551,24 @@ const components: Components = {
       {children}
     </td>
   ),
-  img: ({ src, alt }) => (
-    <figure className="my-8">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={typeof src === 'string' ? src : '/placeholder.svg'}
-        alt={alt ?? ''}
-        className="w-full rounded-md border border-border"
-      />
-      {alt ? (
-        <figcaption className="mt-2 text-center text-sm text-muted-foreground">
-          {alt}
-        </figcaption>
-      ) : null}
-    </figure>
-  ),
+  img: ({ src, alt }) => {
+    if (typeof src !== 'string' || !src) return null
+    return (
+      <figure className="my-8">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt ?? ''}
+          className="w-full rounded-md border border-border"
+        />
+        {alt ? (
+          <figcaption className="mt-2 text-center text-sm text-muted-foreground">
+            {alt}
+          </figcaption>
+        ) : null}
+      </figure>
+    )
+  },
   code: ({ className, children }) => {
     // 块级代码交由 pre 接管，这里只处理行内代码
     if (className?.startsWith('language-')) return <>{children}</>

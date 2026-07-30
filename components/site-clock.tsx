@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from 'react'
 
+/** 站点时区固定为 UTC+8，用 UTC 取值加固定偏移，避免依赖访客本地时区 */
+const TZ_OFFSET_MS = 8 * 60 * 60 * 1000
+
 function format(now: Date) {
+  const t = new Date(now.getTime() + TZ_OFFSET_MS)
   const p = (n: number) => String(n).padStart(2, '0')
-  return `${now.getUTCFullYear()}-${p(now.getUTCMonth() + 1)}-${p(
-    now.getUTCDate(),
-  )} ${p(now.getUTCHours())}:${p(now.getUTCMinutes())}:${p(now.getUTCSeconds())}`
+  return `${t.getUTCFullYear()}-${p(t.getUTCMonth() + 1)}-${p(
+    t.getUTCDate(),
+  )} ${p(t.getUTCHours())}:${p(t.getUTCMinutes())}:${p(t.getUTCSeconds())}`
 }
 
-export function UtcClock({ initial }: { initial: string }) {
+export function SiteClock({ initial }: { initial: string }) {
   const [value, setValue] = useState(initial)
 
   useEffect(() => {
@@ -25,8 +29,8 @@ export function UtcClock({ initial }: { initial: string }) {
         className="size-1.5 rounded-full bg-success"
         aria-hidden="true"
       />
-      <span className="hidden sm:inline">UTC</span>
-      <time suppressHydrationWarning dateTime={value}>
+      <span className="hidden sm:inline">UTC+8</span>
+      <time suppressHydrationWarning dateTime={`${value.replace(' ', 'T')}+08:00`}>
         {value}
       </time>
     </span>

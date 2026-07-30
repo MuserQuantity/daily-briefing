@@ -1,9 +1,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { cache } from 'react'
 import matter from 'gray-matter'
 
+/** 站点时区固定为 UTC+8（中国自 1991 年起无夏令时，偏移恒定） */
+const TZ_OFFSET_MS = 8 * 60 * 60 * 1000
+
 export type DailyMeta = {
-  /** YYYY-MM-DD (UTC) */
+  /** YYYY-MM-DD (UTC+8) */
   date: string
   title: string
   issue?: number
@@ -29,7 +33,8 @@ function toArray(value: unknown): string[] {
   return []
 }
 
-function readAll(): Daily[] {
+/** 单次请求内只扫描一次目录：页面、导航、目录树会重复调用下面的读取函数 */
+const readAll = cache((): Daily[] => {
   if (!fs.existsSync(CONTENT_DIR)) return []
 
   const files = fs
@@ -62,7 +67,7 @@ function readAll(): Daily[] {
 
   // 按日期倒序：最新在前
   return items.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-}
+})
 
 export function getAllDailies(): Daily[] {
   return readAll()
@@ -76,13 +81,23 @@ export function getDailyByDate(date: string): Daily | undefined {
   return readAll().find((d) => d.date === date)
 }
 
-/** 当前 UTC 日期，格式 YYYY-MM-DD */
-export function utcToday(now = new Date()): string {
-  return now.toISOString().slice(0, 10)
+/** 把某一时刻平移到 UTC+8，便于直接取「墙上时钟」的年月日时分秒 */
+function shiftToTz(now: Date): Date {
+  return new Date(now.getTime() + TZ_OFFSET_MS)
+}
+
+/** 当前 UTC+8 日期，格式 YYYY-MM-DD */
+export function today(now = new Date()): string {
+  return shiftToTz(now).toISOString().slice(0, 10)
+}
+
+/** 当前 UTC+8 时刻，格式 YYYY-MM-DD HH:mm:ss（服务端渲染时钟初值） */
+export function nowStamp(now = new Date()): string {
+  return shiftToTz(now).toISOString().slice(0, 19).replace('T', ' ')
 }
 
 /**
- * 解析要展示的日报：优先当前 UTC 日期，
+ * 解析要展示的日报：优先当前 UTC+8 日期，
  * 若当日尚未发布则回退到站内最新一则。
  */
 export function resolveCurrentDaily(now = new Date()): {
@@ -90,13 +105,13 @@ export function resolveCurrentDaily(now = new Date()): {
   isToday: boolean
   today: string
 } {
-  const today = utcToday(now)
+  const date = today(now)
   const all = readAll()
-  const exact = all.find((d) => d.date === today)
+  const exact = all.find((d) => d.date === date)
   return {
     daily: exact ?? all[0],
     isToday: Boolean(exact),
-    today,
+    today: date,
   }
 }
 

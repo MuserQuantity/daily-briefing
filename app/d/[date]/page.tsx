@@ -7,7 +7,8 @@ import {
   formatFullDate,
   getAllMeta,
   getDailyByDate,
-  utcToday,
+  nowStamp,
+  today as currentDate,
 } from '@/lib/daily'
 
 export const dynamic = 'force-dynamic'
@@ -17,9 +18,10 @@ type Params = { params: Promise<{ date: string }> }
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { date } = await params
   const daily = getDailyByDate(date)
-  if (!daily) return { title: '未找到日报 · AI 日报' }
+  // 站点标题后缀由 layout 的 metadata.title.template 统一补上
+  if (!daily) return { title: '未找到日报' }
   return {
-    title: `${daily.title} · AI 日报 ${daily.date}`,
+    title: `${daily.title}（${daily.date}）`,
     description: daily.summary ?? formatFullDate(daily.date),
   }
 }
@@ -31,14 +33,14 @@ export default async function DailyPage({ params }: Params) {
 
   const items = getAllMeta()
   const now = new Date()
-  const today = utcToday(now)
+  const today = currentDate(now)
 
   return (
     <SiteShell
       items={items}
       activeDate={daily.date}
       today={today}
-      clockInitial={now.toISOString().slice(0, 19).replace('T', ' ')}
+      clockInitial={nowStamp(now)}
       toc={extractToc(daily.content)}
     >
       <DailyView daily={daily} today={today} isToday={daily.date === today} />

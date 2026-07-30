@@ -24,7 +24,7 @@ export function DailyView({
           <Info className="mt-0.5 size-4 shrink-0 text-info" aria-hidden="true" />
           <p className="text-[0.925rem] leading-relaxed text-foreground/85">
             <span className="font-semibold text-foreground">
-              今日（UTC {today}）尚未发布。
+              今日（{today}）尚未发布。
             </span>{' '}
             以下为站内最新一期，发布后本页会自动切换。
           </p>

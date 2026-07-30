@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Rss } from 'lucide-react'
-import { UtcClock } from '@/components/utc-clock'
+import { SiteClock } from '@/components/site-clock'
 
 export function SiteHeader({
   clockInitial,
@@ -35,7 +35,7 @@ export function SiteHeader({
             <span className="eyebrow hidden tabular-nums text-muted-foreground md:block">
               {total} 期
             </span>
-            <UtcClock initial={clockInitial} />
+            <SiteClock initial={clockInitial} />
           </div>
         </div>
       </div>

@@ -1,0 +1,15 @@
+.git
+.gitignore
+node_modules
+.next
+out
+build
+*.log
+.env*
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+Dockerfile
+.dockerignore
+docker-compose.yml
+README.md

@@ -1,11 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
+  // 以 standalone 产物打包进容器，运行时不需要完整 node_modules
+  output: 'standalone',
   async headers() {
     return [
       {

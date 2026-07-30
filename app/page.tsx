@@ -1,7 +1,7 @@
 import { DailyView } from '@/components/daily-view'
 import { extractToc } from '@/components/markdown-renderer'
 import { SiteShell } from '@/components/site-shell'
-import { getAllMeta, resolveCurrentDaily } from '@/lib/daily'
+import { getAllMeta, nowStamp, resolveCurrentDaily } from '@/lib/daily'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,14 +9,13 @@ export default function HomePage() {
   const now = new Date()
   const { daily, isToday, today } = resolveCurrentDaily(now)
   const items = getAllMeta()
-  const clockInitial = now.toISOString().slice(0, 19).replace('T', ' ')
 
   return (
     <SiteShell
       items={items}
       activeDate={daily?.date ?? today}
       today={today}
-      clockInitial={clockInitial}
+      clockInitial={nowStamp(now)}
       toc={daily ? extractToc(daily.content) : []}
     >
       {daily ? (

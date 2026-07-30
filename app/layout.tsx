@@ -18,28 +18,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     default: 'AI 日报 · 每日人工智能要闻',
-    template: '%s',
+    template: '%s · AI 日报',
   },
   description:
-    '按日期归档的人工智能日报，默认展示当前 UTC 日期的一期；若当日尚未发布，则显示站内最新一则。',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
+    '按日期归档的人工智能日报，默认展示当前 UTC+8 日期的一期；若当日尚未发布，则显示站内最新一则。',
 }
 
 export const viewport: Viewport = {

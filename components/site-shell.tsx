@@ -20,6 +20,10 @@ export function SiteShell({
   toc?: TocItem[]
   children: ReactNode
 }) {
+  // items 按日期倒序，首尾即归档区间
+  const latest = items[0]?.date
+  const earliest = items[items.length - 1]?.date
+
   return (
     <div className="min-h-dvh">
       <SiteHeader clockInitial={clockInitial} total={items.length} />
@@ -55,12 +59,13 @@ export function SiteShell({
       </div>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-1.5 px-4 py-8 sm:px-6">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-4 py-8 sm:flex-row sm:items-baseline sm:justify-between sm:px-6">
           <p className="eyebrow text-muted-foreground">
-            AI 日报 · 全部日期以 UTC 为准
+            AI 日报 · Daily Briefing
           </p>
-          <p className="text-[13px] text-muted-foreground">
-            内容为示例数据，用于演示日报的排版与渲染效果。
+          <p className="font-mono text-[12px] tabular-nums text-muted-foreground">
+            每日 UTC+8 更新
+            {earliest ? ` · 归档 ${earliest} — ${latest}` : ''}
           </p>
         </div>
       </footer>
