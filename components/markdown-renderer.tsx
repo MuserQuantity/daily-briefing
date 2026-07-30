@@ -336,7 +336,7 @@ function CompareTable({ raw }: { raw: string }) {
 function Timeline({ raw }: { raw: string }) {
   const rows = splitRows(raw)
   return (
-    <ol className="my-6 flex flex-col">
+    <ol className="measure my-6 flex flex-col">
       {rows.map(([time, event, note], i) => (
         <li key={i} className="flex gap-4">
           <div className="flex flex-col items-center pt-1.5">
@@ -443,7 +443,10 @@ function Heading({
   return (
     <Tag
       id={id}
-      className={cn('group flex scroll-mt-24 items-center gap-2 text-pretty text-foreground', styles)}
+      className={cn(
+        'measure group flex scroll-mt-24 items-center gap-2 text-pretty text-foreground',
+        styles,
+      )}
     >
       <span className="min-w-0">{children}</span>
       <a
@@ -461,7 +464,7 @@ function Heading({
 
 const components: Components = {
   h1: ({ children }) => (
-    <h1 className="mt-10 mb-4 text-pretty text-3xl font-light tracking-[0.01em] text-foreground">
+    <h1 className="measure mt-10 mb-4 text-pretty text-3xl font-light tracking-[0.01em] text-foreground">
       {children}
     </h1>
   ),
@@ -481,7 +484,7 @@ const components: Components = {
     </Heading>
   ),
   p: ({ children }) => (
-    <p className="my-4 text-pretty text-[0.975rem] leading-[1.75] text-foreground/85">
+    <p className="measure my-4 text-pretty text-[0.975rem] leading-[1.75] text-foreground/85">
       {children}
     </p>
   ),
@@ -506,12 +509,12 @@ const components: Components = {
     <del className="text-muted-foreground line-through">{children}</del>
   ),
   ul: ({ children }) => (
-    <ul className="my-4 flex list-disc flex-col gap-2 pl-5 marker:text-border-strong">
+    <ul className="measure my-4 flex list-disc flex-col gap-2 pl-5 marker:text-border-strong">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="my-4 flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-[13px] marker:text-muted-foreground">
+    <ol className="measure my-4 flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-[13px] marker:text-muted-foreground">
       {children}
     </ol>
   ),
@@ -520,9 +523,9 @@ const components: Components = {
       {children}
     </li>
   ),
-  hr: () => <hr className="my-10 border-t border-border" />,
+  hr: () => <hr className="measure my-10 border-t border-border" />,
   blockquote: ({ children }) => (
-    <blockquote className="my-6 border-l-2 border-border-strong pl-4 text-[0.95rem] leading-relaxed text-muted-foreground [&>p]:my-2">
+    <blockquote className="measure my-6 border-l-2 border-border-strong pl-4 text-[0.95rem] leading-relaxed text-muted-foreground [&>p]:my-2">
       {children}
     </blockquote>
   ),

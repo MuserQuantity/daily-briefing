@@ -45,7 +45,12 @@ export function SiteShell({
           <div className="lg:hidden">
             <ArchiveStrip items={items} activeDate={activeDate} />
           </div>
-          <div className="mt-6 min-w-0 max-w-[48rem] lg:mt-0">{children}</div>
+          {/*
+            正文列是流动的，不在这里统一限宽。
+            行长由子元素各自的 .measure / .measure-title 控制，
+            表格、指标卡等数据区块则铺满整列。
+          */}
+          <div className="mt-6 min-w-0 lg:mt-0">{children}</div>
         </main>
 
         {/* 右：本页目录 */}
