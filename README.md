@@ -82,6 +82,13 @@ highlights:
 
 **完整字段说明和语法规范见 [content/FORMAT.md](content/FORMAT.md)**——那份文档就是写给自动任务看的，可以直接塞进 prompt。
 
+现成的提示词放在 [docs/prompts/](docs/prompts/)：
+
+- [daily.md](docs/prompts/daily.md) —— 每日定时生成并发布，含跨期去重规则
+- [backfill.md](docs/prompts/backfill.md) —— 把别处写好的历史日报批量转换并上传
+
+两份都用 `<DAILY_API_TOKEN>` 占位，用之前替换成真实密钥。
+
 ### 几条硬约束
 
 - 路径为 `content/daily/YYYY/MM/YYYY-MM-DD.md`，月份补零（`07` 而非 `7`）
@@ -221,6 +228,7 @@ lib/
 content/
   FORMAT.md           Markdown 格式规范（不会被渲染）
   daily/YYYY/MM/*.md  日报正文，按年月归档
+docs/prompts/         自动任务用的提示词
 .env.example          环境变量样例
 ```
 
